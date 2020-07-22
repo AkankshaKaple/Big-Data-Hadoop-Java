@@ -1,13 +1,10 @@
 package com.learn.assignment.GetDeptWiseSummary;
 
 import java.io.IOException;
-
-
-import org.apache.commons.lang.ArrayUtils;
+import java.util.Iterator;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Reducer.Context;
 
 public class GetDeptWiseSummaryReducer extends Reducer<Text, Text, Text, NullWritable>{
 	@Override
@@ -16,18 +13,36 @@ public class GetDeptWiseSummaryReducer extends Reducer<Text, Text, Text, NullWri
 		long total_emp = 0;
 		long male_count = 0;
 		long female_count = 0;
-		long max_sal = 0;
-		long min_sal = 0;
-		long avg_sal = 0;
+		Long max_sal = 0L;
+		Long min_sal = 0L;
 		long CTC = 0;
 		
-	
-		 for (Text record : records) { 
-			 
-			 System.out.println(record);
-			 String[] fields = record.toString().split(":");
-			 
-			 total_emp ++;
+		
+		Iterator<Text> record = records.iterator();
+		
+		int i = 0;
+		while(record.hasNext()) {
+			
+			Text temp = record.next();
+
+			String[] fields = temp.toString().split(":");
+			
+			if (fields.length >= 4) {
+			long sal = Long.parseLong(fields[4]);
+			
+			if (i == 0) {
+				max_sal = sal;
+				min_sal = sal;
+				i++;
+			}			
+			if(sal < min_sal) {
+				min_sal = sal;				
+			}else if(sal > max_sal) {
+				max_sal = sal;
+				
+			}
+			
+			total_emp ++;
 			 
 			 CTC = CTC + Long.parseLong(fields[4]);
 			 		 
@@ -37,16 +52,14 @@ public class GetDeptWiseSummaryReducer extends Reducer<Text, Text, Text, NullWri
 			 else {
 				 male_count++;
 			 }
-			 	 
-			 		 
-		 }
-		 
-		 avg_sal = CTC / total_emp;
-		 
-		 String result = key + ":" + total_emp + ":" + male_count + ":" + female_count + ":" + CTC + ":" + avg_sal; 
-		 context.write(new Text(result), NullWritable.get());
-		 
-		 System.out.println("Done");
+						
+		}
+			
+	}
+		long avg_sal = CTC / total_emp;
+		
+		String result =  key + ":" + total_emp + ":" + male_count + ":" + female_count + ":" + max_sal + ":" + min_sal + ":" + + avg_sal + ":" + CTC;	
+		context.write(new Text(result), NullWritable.get());
 	}
 
 }
